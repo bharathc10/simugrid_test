@@ -3,6 +3,39 @@ import sqlite3
 
 st.title("⚡ SimuGrid Test Dashboard")
 
+# READ SECRETS
+db_file = st.secrets["database"]["db_name"]
+
+# 🛠️ CLOUD INITIALIZATION BLOCK
+# This runs every time the app starts to guarantee the database structure exists
+def init_db():
+    connection = sqlite3.connect(db_file)
+    cursor = connection.cursor()
+    # Create table if missing
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS substations (
+        substation_id TEXT PRIMARY KEY,
+        substation_name TEXT,
+        status TEXT
+    );
+    """)
+    # Insert starter data if the table is completely empty
+    cursor.execute("SELECT COUNT(*) FROM substations")
+    if cursor.fetchone()[0] == 0:
+        test_rows = [
+            ('1', 'North Grid', 'Active'),
+            ('2', 'South Station', 'Maintenance')
+        ]
+        cursor.executemany("""
+        INSERT INTO substations (substation_id, substation_name, status)
+        VALUES (?, ?, ?);
+        """, test_rows)
+        connection.commit()
+    connection.close()
+
+# Run the initialization
+init_db()
+
 # Create layout panes (Sidebar and Main View)
 sidebar_pane, main_pane = st.columns([1, 2])
 
